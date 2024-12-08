@@ -42,6 +42,7 @@ mypy-extensions==1.0.0
 mysql-connector-python==9.1.0
 mysqlclient==2.2.6
 narwhals==1.16.0
+ngrok==1.4.0
 numpy==1.26.4
 orjson==3.10.12
 packaging==24.2
