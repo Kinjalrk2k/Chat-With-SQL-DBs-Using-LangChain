@@ -11,6 +11,7 @@ import os
 from langchain_groq import ChatGroq
 from dotenv import load_dotenv
 import urllib.parse
+import ngrok
 
 load_dotenv()
 
@@ -24,12 +25,21 @@ radio_opt = ["Use SQLite3 Database - student.db", "Connect to your MySQL Databas
 
 selected_opt = st.sidebar.radio(label = "Choose the DB you want to interact with", options = radio_opt)
 
+
+def clear_inputs():
+    print("here123")
+    st.session_state["mysql_host"] = ""
+    st.session_state["mysql_user"] = ""
+    st.session_state["mysql_password"] = ""
+    st.session_state["mysql_db"] = ""
+
 if radio_opt.index(selected_opt) == 1:
     db_uri = MYSQL
-    mysql_host = st.sidebar.text_input("Provide MySQL Host Name")
-    mysql_user = st.sidebar.text_input("MYSQL User Name")
-    mysql_password = st.sidebar.text_input("MYSQL Password", type = "password")
-    mysql_db = st.sidebar.text_input("MySQL Database Name")
+    tunnel_conn = st.sidebar.checkbox("Tunnel connection", on_change=clear_inputs)
+    mysql_host = st.sidebar.text_input("Provide MySQL Host Name", key="mysql_host")
+    mysql_user = st.sidebar.text_input("MYSQL User Name", key="mysql_user")
+    mysql_password = st.sidebar.text_input("MYSQL Password", type = "password", key="mysql_password")
+    mysql_db = st.sidebar.text_input("MySQL Database Name", key="mysql_db")
 else:
     db_uri = LOCALDB
 
@@ -55,6 +65,9 @@ def configure_db(db_uri, mysql_host = None, mysql_user = None, mysql_password = 
         if not (mysql_host and mysql_user and mysql_password and mysql_db):
             st.error("Please provide all MySQL connection details!")
             st.stop()
+        if tunnel_conn:
+            listener = ngrok.forward(3306, "tcp", authtoken_from_env=True)
+            mysql_host = listener.url().replace("tcp://", "")
         connection_str = f"mysql+mysqlconnector://{mysql_user}:{urllib.parse.quote_plus(mysql_password)}@{mysql_host}/{mysql_db}"
         return SQLDatabase(create_engine(connection_str))   
     
